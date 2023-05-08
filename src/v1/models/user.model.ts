@@ -49,6 +49,7 @@ const userSchema = new Schema<UserInterface, UserModel, UserMethods>(
 
 /**
  * * generating a hash
+ * @function generateHash(password)
  * @param password
  * @returns encrypted hashed password string
  */
@@ -58,6 +59,7 @@ userSchema.static('generateHash', function (password: string) {
 
 /**
  * * checking if password is valid
+ * @function validatePassword(password)
  * @param password
  * @returns boolean
  */
@@ -67,6 +69,7 @@ userSchema.method('validatePassword', function (password: any): boolean {
 
 /**
  * * check if a email exists in the db
+ * @function emailExist(email)
  * @param email
  * @returns user document
  */
@@ -75,7 +78,7 @@ userSchema.static('emailExist', function (email: string) {
 });
 
 /**
- * delete these object keys before returning the db document to consumer
+ * * delete these object keys before returning the db document to consumer
  * @returns user document with deleted keys
  */
 userSchema.methods.toJSON = function () {
