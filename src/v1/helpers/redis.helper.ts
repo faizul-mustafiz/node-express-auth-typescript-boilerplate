@@ -221,6 +221,49 @@ export const deleteChangePasswordTokenIdentity = async (identity: string) => {
 };
 
 /**
+ * * application related methods
+ */
+export const isAppIdIdentityExists = async (identity: string) => {
+  try {
+    const result = await isIdentityExists(`app:${identity}`);
+    Logger.debug('isAppIdIdentityExists-result: %s', result);
+    return result;
+  } catch (error) {
+    Logger.error('isAppIdIdentityExists-error:', error);
+  }
+};
+export const setAppIdIdentity = async (identity: string, payload: any) => {
+  try {
+    const result = await setIdentityWithHSetNoExpiry(
+      `app:${identity}`,
+      payload,
+    );
+    Logger.debug('setAppIdIdentity-result: %s', result);
+    return result;
+  } catch (error) {
+    Logger.error('setAppIdIdentity-error:', error);
+  }
+};
+export const getAppIdIdentity = async (identity: string) => {
+  try {
+    let result = await getHSetIdentityPayload(`app:${identity}`);
+    Logger.debug('getAppIdIdentity-result: %s', result);
+    return result;
+  } catch (error) {
+    Logger.error('getAppIdIdentity-error:', error);
+  }
+};
+export const deleteAppIdIdentity = async (identity: string) => {
+  try {
+    const result = await deleteIdentity(`app:${identity}`);
+    Logger.debug('deleteAppIdIdentity-result: %s', result);
+    return result;
+  } catch (error) {
+    Logger.error('deleteAppIdIdentity-error:', error);
+  }
+};
+
+/**
  * * clean up redis db related method
  */
 export const deleteDataFromRedis = async () => {
