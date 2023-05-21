@@ -1,8 +1,15 @@
-import { testUserObj, testUserUpdateObj } from './common';
 import { Server } from '../../../index';
 import { User } from '../models/user.model';
+import { Application } from '../models/application.model';
+import JsonEncryptDecryptAes from '@faizul-mustafiz/json-ed-aes';
 import { AppConfig } from '../configs/app.config';
-import { deleteDataFromRedis } from '../helpers/redis.helper';
+const { baseRoute } = AppConfig;
+import {
+  testApplicationCreateRequestBody,
+  testDeviceInfo,
+  testUserSignUpRequestBody,
+  testUserUpdateRequestBody,
+} from './common';
 /**
  * * import chai, chai-http dependencies
  * * also inject Server for mocha to run tests
@@ -12,13 +19,19 @@ import { deleteDataFromRedis } from '../helpers/redis.helper';
  */
 import chai from 'chai';
 import chaiHttp from 'chai-http';
-const { baseRoute } = AppConfig;
 const should = chai.should();
+const expect = chai.expect;
 chai.use(chaiHttp);
 
 /**
  * * global variables needed for the entire test file
  */
+let xAppId = '';
+let xApiKey = '';
+let xApiSecret = '';
+let xApiMinVersion = '';
+let xDeviceInfo = '';
+
 let testUserId = '';
 let verifyToken = '';
 let verifyCode = '';
@@ -28,6 +41,11 @@ let refreshToken = '';
  * * all global variable reset method
  */
 const resetAllTestVariables = () => {
+  xAppId = '';
+  xApiKey = '';
+  xApiSecret = '';
+  xApiMinVersion = '';
+  xDeviceInfo = '';
   testUserId = '';
   verifyToken = '';
   verifyCode = '';
@@ -45,8 +63,10 @@ describe('User controller tests', () => {
    * * applications collection and users collection
    */
   before((done) => {
-    User.deleteMany({}).then((result) => {
-      done();
+    Application.deleteMany({}).then((result: any) => {
+      User.deleteMany({}).then((result: any) => {
+        done();
+      });
     });
   });
   /**
@@ -57,8 +77,60 @@ describe('User controller tests', () => {
    */
   after((done) => {
     resetAllTestVariables();
-    deleteDataFromRedis();
     done();
+  });
+  /**
+   * * perform application creation process as entire auth test file use the created
+   * * application credential as app info header and without header the test will fail
+   */
+  describe('[POST] /applications | Application creation test', () => {
+    it('it should create-one-application and encrypt', (done) => {
+      chai
+        .request(Server)
+        .post(`${baseRoute}/applications`)
+        .send(testApplicationCreateRequestBody)
+        .end((err, res) => {
+          res.should.have.status(201);
+          res.body.should.be.a('object');
+          res.body.should.have.property('success').eql(true);
+          res.body.should.have.property('message');
+          res.body.should.have.property('result');
+          res.body.result.should.be.a('object');
+          res.body.result.should.have.property('_id');
+          res.body.result.should.have.property('appId');
+          res.body.result.should.have
+            .property('appName')
+            .eql(testApplicationCreateRequestBody.appName);
+          res.body.result.should.have.property('apiKey');
+          res.body.result.should.have.property('apiSecret');
+          res.body.result.should.have.property('appMinVersion');
+          res.body.result.should.have
+            .property('origin')
+            .eql(testApplicationCreateRequestBody.origin);
+          res.body.result.should.have.property('status');
+          res.body.result.should.have.property('created_at');
+          res.body.result.should.have.property('updated_at');
+          xAppId = res.body.result.appId;
+          xApiKey = res.body.result.apiKey;
+          xApiSecret = res.body.result.apiSecret;
+          xApiMinVersion = res.body.result.appMinVersion;
+          done();
+        });
+    });
+  });
+  /**
+   * * perform device info encryption process as this will be need to perform sing-up
+   * * process as sign-up method verify custom header validator checks if a perfectly encrypted
+   * * device info is preset with all the application credential custom header
+   */
+  describe('Device info encryption test', () => {
+    it('it should encrypt a device info object using json-ed-aes encrypt()', (done) => {
+      let aes = new JsonEncryptDecryptAes(xApiSecret);
+      let encryptedDeviceInfo = aes.encrypt(testDeviceInfo);
+      expect(encryptedDeviceInfo).to.be.string;
+      xDeviceInfo = encryptedDeviceInfo;
+      done();
+    });
   });
   /**
    * * perform sign-up process test. Here this test will first request the /sign-up
@@ -73,7 +145,11 @@ describe('User controller tests', () => {
       chai
         .request(Server)
         .post(`${baseRoute}/auth/sign-up`)
-        .send(testUserObj)
+        .set('x-app-id', xAppId)
+        .set('x-api-key', xApiKey)
+        .set('x-app-version', xApiMinVersion)
+        .set('x-device-info', xDeviceInfo)
+        .send(testUserSignUpRequestBody)
         .end((err, res) => {
           res.should.have.status(200);
           res.body.should.be.a('object');
@@ -94,6 +170,9 @@ describe('User controller tests', () => {
         .request(Server)
         .post(`${baseRoute}/auth/verify`)
         .set('Authorization', `Bearer ${verifyToken}`)
+        .set('x-app-id', xAppId)
+        .set('x-api-key', xApiKey)
+        .set('x-app-version', xApiMinVersion)
         .send({ code: verifyCode })
         .end((err, res) => {
           res.should.have.status(201);
@@ -102,7 +181,9 @@ describe('User controller tests', () => {
           res.body.should.have.property('message');
           res.body.should.have.property('result');
           res.body.result.should.be.a('object');
-          res.body.result.should.have.property('email').eql(testUserObj.email);
+          res.body.result.should.have
+            .property('email')
+            .eql(testUserSignUpRequestBody.email);
           res.body.result.should.have.property('_id');
           res.body.result.should.have.property('accessToken');
           res.body.result.should.have.property('refreshToken');
@@ -123,6 +204,9 @@ describe('User controller tests', () => {
         .request(Server)
         .get(`${baseRoute}/users`)
         .set('Authorization', `Bearer ${accessToken}`)
+        .set('x-app-id', xAppId)
+        .set('x-api-key', xApiKey)
+        .set('x-app-version', xApiMinVersion)
         .end((err, res) => {
           res.should.have.status(200);
           res.body.should.be.a('object');
@@ -133,7 +217,7 @@ describe('User controller tests', () => {
           res.body.result[0].should.have.property('_id');
           res.body.result[0].should.have
             .property('email')
-            .eql(testUserObj.email);
+            .eql(testUserSignUpRequestBody.email);
           res.body.result[0].should.have.property('created_at');
           res.body.result[0].should.have.property('updated_at');
           testUserId = res.body.result[0]._id;
@@ -150,6 +234,9 @@ describe('User controller tests', () => {
         .request(Server)
         .get(`${baseRoute}/users/${testUserId}`)
         .set('Authorization', `Bearer ${accessToken}`)
+        .set('x-app-id', xAppId)
+        .set('x-api-key', xApiKey)
+        .set('x-app-version', xApiMinVersion)
         .end((err, res) => {
           res.should.have.status(200);
           res.body.should.be.a('object');
@@ -158,7 +245,9 @@ describe('User controller tests', () => {
           res.body.should.have.property('result');
           res.body.result.should.be.a('object');
           res.body.result.should.have.property('_id').eql(testUserId);
-          res.body.result.should.have.property('email').eql(testUserObj.email);
+          res.body.result.should.have
+            .property('email')
+            .eql(testUserSignUpRequestBody.email);
           res.body.result.should.have.property('created_at');
           res.body.result.should.have.property('updated_at');
           done();
@@ -177,7 +266,10 @@ describe('User controller tests', () => {
         .request(Server)
         .post(`${baseRoute}/users/${testUserId}`)
         .set('Authorization', `Bearer ${accessToken}`)
-        .send(testUserUpdateObj)
+        .set('x-app-id', xAppId)
+        .set('x-api-key', xApiKey)
+        .set('x-app-version', xApiMinVersion)
+        .send(testUserUpdateRequestBody)
         .end((err, res) => {
           res.should.have.status(200);
           res.body.should.be.a('object');
@@ -188,7 +280,7 @@ describe('User controller tests', () => {
           res.body.result.should.have.property('_id').eql(testUserId);
           res.body.result.should.have
             .property('email')
-            .eql(testUserUpdateObj.email);
+            .eql(testUserUpdateRequestBody.email);
           res.body.result.should.have.property('created_at');
           res.body.result.should.have.property('updated_at');
           done();
@@ -204,6 +296,9 @@ describe('User controller tests', () => {
         .request(Server)
         .delete(`${baseRoute}/users/${testUserId}`)
         .set('Authorization', `Bearer ${accessToken}`)
+        .set('x-app-id', xAppId)
+        .set('x-api-key', xApiKey)
+        .set('x-app-version', xApiMinVersion)
         .end((err, res) => {
           res.should.have.status(200);
           res.body.should.be.a('object');
@@ -214,7 +309,7 @@ describe('User controller tests', () => {
           res.body.result.should.have.property('_id').eql(testUserId);
           res.body.result.should.have
             .property('email')
-            .eql(testUserUpdateObj.email);
+            .eql(testUserUpdateRequestBody.email);
           res.body.result.should.have.property('created_at');
           res.body.result.should.have.property('updated_at');
           done();

@@ -10,5 +10,6 @@ process.env.NODE_ENV = 'testing';
 
 import * as AuthTest from './auth.spec';
 import * as UserTest from './user.spec';
+import * as ApplicationTest from './application.spec';
 
-export { AuthTest, UserTest };
+export { AuthTest, UserTest, ApplicationTest };

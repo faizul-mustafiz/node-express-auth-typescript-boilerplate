@@ -1,8 +1,15 @@
-import { testUserObj, testNewPassword } from './common';
 import { Server } from '../../../index';
 import { User } from '../models/user.model';
+import { Application } from '../models/application.model';
+import JsonEncryptDecryptAes from '@faizul-mustafiz/json-ed-aes';
 import { AppConfig } from '../configs/app.config';
 const { baseRoute } = AppConfig;
+import {
+  testUserSignUpRequestBody,
+  testNewPassword,
+  testApplicationCreateRequestBody,
+  testDeviceInfo,
+} from './common';
 /**
  * * import chai, chai-http dependencies
  * * also inject Server for mocha to run tests
@@ -13,11 +20,18 @@ const { baseRoute } = AppConfig;
 import chai from 'chai';
 import chaiHttp from 'chai-http';
 const should = chai.should();
+const expect = chai.expect;
 chai.use(chaiHttp);
 
 /**
  * * global variables needed for the entire test file
  */
+let xAppId = '';
+let xApiKey = '';
+let xApiSecret = '';
+let xApiMinVersion = '';
+let xDeviceInfo = '';
+
 let verifyToken = '';
 let verifyCode = '';
 let forgotPassToken = '';
@@ -29,6 +43,11 @@ let refreshToken = '';
  * * all global variable reset method
  */
 const resetAllTestVariables = () => {
+  xAppId = '';
+  xApiKey = '';
+  xApiSecret = '';
+  xApiMinVersion = '';
+  xDeviceInfo = '';
   verifyToken = '';
   verifyCode = '';
   forgotPassToken = '';
@@ -47,8 +66,10 @@ describe('Auth controller tests', () => {
    * * applications collection and users collection
    */
   before((done) => {
-    User.deleteMany({}).then((result) => {
-      done();
+    Application.deleteMany({}).then((result: any) => {
+      User.deleteMany({}).then((result: any) => {
+        done();
+      });
     });
   });
   /**
@@ -58,6 +79,59 @@ describe('Auth controller tests', () => {
   after((done) => {
     resetAllTestVariables();
     done();
+  });
+  /**
+   * * perform application creation process as entire auth test file use the created
+   * * application credential as app info header and without header the test will fail
+   */
+  describe('[POST] /applications | Application creation test', () => {
+    it('it should create-one-application and encrypt', (done) => {
+      chai
+        .request(Server)
+        .post(`${baseRoute}/applications`)
+        .send(testApplicationCreateRequestBody)
+        .end((err, res) => {
+          res.should.have.status(201);
+          res.body.should.be.a('object');
+          res.body.should.have.property('success').eql(true);
+          res.body.should.have.property('message');
+          res.body.should.have.property('result');
+          res.body.result.should.be.a('object');
+          res.body.result.should.have.property('_id');
+          res.body.result.should.have.property('appId');
+          res.body.result.should.have
+            .property('appName')
+            .eql(testApplicationCreateRequestBody.appName);
+          res.body.result.should.have.property('apiKey');
+          res.body.result.should.have.property('apiSecret');
+          res.body.result.should.have.property('appMinVersion');
+          res.body.result.should.have
+            .property('origin')
+            .eql(testApplicationCreateRequestBody.origin);
+          res.body.result.should.have.property('status');
+          res.body.result.should.have.property('created_at');
+          res.body.result.should.have.property('updated_at');
+          xAppId = res.body.result.appId;
+          xApiKey = res.body.result.apiKey;
+          xApiSecret = res.body.result.apiSecret;
+          xApiMinVersion = res.body.result.appMinVersion;
+          done();
+        });
+    });
+  });
+  /**
+   * * perform device info encryption process as this will be needed to perform sing-up process
+   * * as sign-up method verify device info header validator check. if a perfectly
+   * * encrypted device info is present with all the app info header
+   */
+  describe('Device info encryption test', () => {
+    it('it should encrypt a device info object using json-ed-aes encrypt()', (done) => {
+      let aes = new JsonEncryptDecryptAes(xApiSecret);
+      let encryptedDeviceInfo = aes.encrypt(testDeviceInfo);
+      expect(encryptedDeviceInfo).to.be.string;
+      xDeviceInfo = encryptedDeviceInfo;
+      done();
+    });
   });
   /**
    * * complete sign-up process test. Here this test will first request the /sign-up
@@ -70,7 +144,11 @@ describe('Auth controller tests', () => {
       chai
         .request(Server)
         .post(`${baseRoute}/auth/sign-up`)
-        .send(testUserObj)
+        .set('x-app-id', xAppId)
+        .set('x-api-key', xApiKey)
+        .set('x-app-version', xApiMinVersion)
+        .set('x-device-info', xDeviceInfo)
+        .send(testUserSignUpRequestBody)
         .end((err, res) => {
           res.should.have.status(200);
           res.body.should.be.a('object');
@@ -91,6 +169,9 @@ describe('Auth controller tests', () => {
         .request(Server)
         .post(`${baseRoute}/auth/verify`)
         .set('Authorization', `Bearer ${verifyToken}`)
+        .set('x-app-id', xAppId)
+        .set('x-api-key', xApiKey)
+        .set('x-app-version', xApiMinVersion)
         .send({ code: verifyCode })
         .end((err, res) => {
           res.should.have.status(201);
@@ -99,7 +180,9 @@ describe('Auth controller tests', () => {
           res.body.should.have.property('message');
           res.body.should.have.property('result');
           res.body.result.should.be.a('object');
-          res.body.result.should.have.property('email').eql(testUserObj.email);
+          res.body.result.should.have
+            .property('email')
+            .eql(testUserSignUpRequestBody.email);
           res.body.result.should.have.property('_id');
           res.body.result.should.have.property('accessToken');
           res.body.result.should.have.property('refreshToken');
@@ -120,7 +203,11 @@ describe('Auth controller tests', () => {
       chai
         .request(Server)
         .post(`${baseRoute}/auth/sign-in`)
-        .send(testUserObj)
+        .set('x-app-id', xAppId)
+        .set('x-api-key', xApiKey)
+        .set('x-app-version', xApiMinVersion)
+        .set('x-device-info', xDeviceInfo)
+        .send(testUserSignUpRequestBody)
         .end((err, res) => {
           res.should.have.status(200);
           res.body.should.be.a('object');
@@ -141,6 +228,9 @@ describe('Auth controller tests', () => {
         .request(Server)
         .post(`${baseRoute}/auth/verify`)
         .set('Authorization', `Bearer ${verifyToken}`)
+        .set('x-app-id', xAppId)
+        .set('x-api-key', xApiKey)
+        .set('x-app-version', xApiMinVersion)
         .send({ code: verifyCode })
         .end((err, res) => {
           res.should.have.status(200);
@@ -166,7 +256,11 @@ describe('Auth controller tests', () => {
       chai
         .request(Server)
         .post(`${baseRoute}/auth/forgot-password`)
-        .send({ email: testUserObj.email })
+        .set('x-app-id', xAppId)
+        .set('x-api-key', xApiKey)
+        .set('x-app-version', xApiMinVersion)
+        .set('x-device-info', xDeviceInfo)
+        .send({ email: testUserSignUpRequestBody.email })
         .end((err, res) => {
           res.should.have.status(200);
           res.body.should.be.a('object');
@@ -192,6 +286,9 @@ describe('Auth controller tests', () => {
         .request(Server)
         .post(`${baseRoute}/auth/change-password`)
         .set('Authorization', `Bearer ${forgotPassToken}`)
+        .set('x-app-id', xAppId)
+        .set('x-api-key', xApiKey)
+        .set('x-app-version', xApiMinVersion)
         .send({ code: forgotPassCode, new_password: testNewPassword })
         .end((err, res) => {
           res.should.have.status(200);
@@ -214,6 +311,9 @@ describe('Auth controller tests', () => {
         .request(Server)
         .post(`${baseRoute}/auth/refresh`)
         .set('Authorization', `Bearer ${refreshToken}`)
+        .set('x-app-id', xAppId)
+        .set('x-api-key', xApiKey)
+        .set('x-app-version', xApiMinVersion)
         .send({})
         .end((err, res) => {
           res.should.have.status(200);
@@ -240,6 +340,9 @@ describe('Auth controller tests', () => {
         .request(Server)
         .post(`${baseRoute}/auth/revoke-at`)
         .set('Authorization', `Bearer ${accessToken}`)
+        .set('x-app-id', xAppId)
+        .set('x-api-key', xApiKey)
+        .set('x-app-version', xApiMinVersion)
         .send({})
         .end((err, res) => {
           res.should.have.status(200);
@@ -262,6 +365,9 @@ describe('Auth controller tests', () => {
         .request(Server)
         .post(`${baseRoute}/auth/revoke-rt`)
         .set('Authorization', `Bearer ${refreshToken}`)
+        .set('x-app-id', xAppId)
+        .set('x-api-key', xApiKey)
+        .set('x-app-version', xApiMinVersion)
         .send({})
         .end((err, res) => {
           res.should.have.status(200);
