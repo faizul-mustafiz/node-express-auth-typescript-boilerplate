@@ -18,8 +18,6 @@ export const environment = {
   MONGO_URL: process.env.MONGO_URL as string,
   MONGO_USERNAME: process.env.MONGO_USERNAME as string,
   MONGO_PASSWORD: process.env.MONGO_PASSWORD as string,
-  // hashing algorithm for encryption
-  HASHING_ALGORITHM: process.env.HASHING_ALGORITHM as string,
   // JWT environment variables
   ACCESS_TOKEN_SECRET: process.env.ACCESS_TOKEN_SECRET as string,
   ACCESS_TOKEN_EXPIRY_TIME: process.env.ACCESS_TOKEN_EXPIRY_TIME as string,

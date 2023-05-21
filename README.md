@@ -140,9 +140,6 @@ MONGO_PASSWORD="your-mongo-password"
 # mongodb test environment variables
 MONGO_URL_TEST="your-mongo-test-db-connection-string"
 
-# encryption and decryption environment variables
-HASHING_ALGORITHM='AES-GCM'
-
 # JWT environment variables
 ACCESS_TOKEN_SECRET="Your access token secret"
 ACCESS_TOKEN_EXPIRY_TIME=10800
