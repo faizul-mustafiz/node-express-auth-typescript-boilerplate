@@ -1,11 +1,9 @@
 import { environment } from '../environments/index';
 
-const { MONGO_URL, MONGO_USERNAME, MONGO_PASSWORD } = environment;
+const { MONGO_URL } = environment;
 
 const config = {
   url: MONGO_URL,
-  username: MONGO_USERNAME,
-  password: MONGO_PASSWORD,
 };
 
 const options = {
