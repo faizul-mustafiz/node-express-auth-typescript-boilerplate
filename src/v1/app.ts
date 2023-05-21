@@ -57,8 +57,6 @@ app.use(`${baseRoute}/applications`, ApplicationRoutes);
  * * Route injection for swagger documentation
  */
 app.use('/v1/docs', SwaggerUI.serve, SwaggerUI.setup(docs));
-console.log('swagger-docs', docs);
-
 /**
  * * Error logger middleware
  * * Error handler middleware
