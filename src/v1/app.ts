@@ -3,6 +3,9 @@ dotenv.config();
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
+import SwaggerUI from 'swagger-ui-express';
+import docs from './docs';
+
 import { ApplicationRoutes, AuthRoutes, UserRoutes } from './routes';
 import { AppConfig } from './configs/app.config';
 import { HttpLogger } from './loggers/httpLogger';
@@ -50,6 +53,11 @@ app.get(`${baseRoute}/health`, (req, res) => {
 app.use(`${baseRoute}/auth`, AuthRoutes);
 app.use(`${baseRoute}/users`, UserRoutes);
 app.use(`${baseRoute}/applications`, ApplicationRoutes);
+/**
+ * * Route injection for swagger documentation
+ */
+app.use('/v1/docs', SwaggerUI.serve, SwaggerUI.setup(docs));
+console.log('swagger-docs', docs);
 
 /**
  * * Error logger middleware
