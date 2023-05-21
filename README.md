@@ -89,7 +89,6 @@ npm start
     |--helpers\        # route controller helpers functions
     |--logger\         # base logger and file logger config files
     |--middlewares\    # express middlewares related to auth and validation
-    |--module-test\    # plugins module custom test methods
     |--nginx\          # docker configs and docker file for nginx
     |--plugins\        # plugins for project like redis and mongodb
     |--responses\      # success response object builder
@@ -124,34 +123,22 @@ BASE_API_ROUTE="/api/v1"
 # redis environment variables
 # this url is for redis configured is redis-Labs/docker container/Kubernetes cluster
 REDIS_URL="your-redis-labs-connection-string"
-REDIS_HOST="your-redis-host-name"
-REDIS_PORT=6379
-REDIS_USERNAME="your-redis-username"
-REDIS_PASSWORD="your-redis-password"
 
 # redis test environment variables
 REDIS_URL_TEST="your-redis-test-db-connection-string"
 
 # mongodb environment variables
 MONGO_URL="your-mongo-connection-string"
-MONGO_USERNAME="your-mongo-username"
-MONGO_PASSWORD="your-mongo-password"
 
 # mongodb test environment variables
 MONGO_URL_TEST="your-mongo-test-db-connection-string"
 
 # JWT environment variables
-ACCESS_TOKEN_SECRET="Your access token secret"
 ACCESS_TOKEN_EXPIRY_TIME=10800
-
-REFRESH_TOKEN_SECRET="Your refresh token secret"
 REFRESH_TOKEN_EXPIRY_TIME=43200
 
 VERIFY_TOKEN_SECRET="Your verify token secret"
 VERIFY_TOKEN_EXPIRY_TIME=3600
-
-RESET_PASSWORD_TOKEN_SECRET="Your reset password token secret"
-RESET_PASSWORD_TOKEN_EXPIRY_TIME=3600
 
 CHANGE_PASSWORD_TOKEN_SECRET="Your change password token secret"
 CHANGE_PASSWORD_TOKEN_EXPIRY_TIME=3600
@@ -241,9 +228,7 @@ secrets.REDIS_URL                           # redis db/index url for app
 secrets.REDIS_URL_TEST                      # redis deb/index url for test
 secrets.MONGO_URL                           # mongo main db url
 secrets.MONGO_URL_TEST                      # mongo test db url
-secrets.ACCESS_TOKEN_SECRET                 # access token secret
 secrets.ACCESS_TOKEN_EXPIRY_TIME            # access token expiry time
-secrets.REFRESH_TOKEN_SECRET                # refresh token secret
 secrets.REFRESH_TOKEN_EXPIRY_TIME           # refresh token expiry time
 secrets.VERIFY_TOKEN_SECRET                 # verify token secret
 secrets.VERIFY_TOKEN_EXPIRY_TIME            # verify token expiry time
