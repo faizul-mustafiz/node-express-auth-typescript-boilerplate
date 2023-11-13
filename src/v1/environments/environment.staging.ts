@@ -6,7 +6,8 @@ export const environment = {
   API_PROTOCOL: process.env.API_PROTOCOL as string,
   API_HOST: process.env.API_HOST as string,
   API_PORT: process.env.API_PORT as string,
-  BASE_API_ROUTE: process.env.BASE_API_ROUTE as string,
+  API_VERSION: process.env.API_VERSION as string,
+  ROUTE_PREFIX: process.env.ROUTE_PREFIX as string,
   // redis environments variables
   REDIS_URL: process.env.REDIS_URL as string,
   // mongo environment variables
