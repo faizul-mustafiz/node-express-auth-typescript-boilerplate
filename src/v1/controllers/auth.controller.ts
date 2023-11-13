@@ -14,7 +14,7 @@ import {
 } from '../helpers/jwt.helper';
 import { AuthActionType } from '../enums/authActionType.enum';
 import { AuthControllerOrigin } from '../enums/authControllerOrigin.enum';
-import { Created, Success } from '../reponses/httpResponse';
+import { Created, Success } from '../responses/httpResponse';
 import { Logger } from '../loggers/logger';
 import { TokenType } from '../enums/tokenType.enum';
 import { UnauthorizedError } from '../errors/UnauthorizedError';

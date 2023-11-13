@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { Application } from '../models/application.model';
 import { Logger } from '../loggers/logger';
 import { NonAuthoritativeError } from '../errors/NonAuthoritativeError';
-import { Created, Success } from '../reponses/httpResponse';
+import { Created, Success } from '../responses/httpResponse';
 import { ApplicationControllerOrigin } from '../enums/applicationControllerOrigin.enum';
 import { NotFoundError } from '../errors/NotFoundError';
 import { BadRequestError } from '../errors/BadRequestError';

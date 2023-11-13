@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { BadRequest } from '../reponses/httpResponse';
+import { BadRequest } from '../responses/httpResponse';
 
 export const InvalidPath = (
   req: Request,
